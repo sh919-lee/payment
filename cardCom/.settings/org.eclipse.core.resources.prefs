@@ -1,0 +1,5 @@
+eclipse.preferences.version=1
+encoding//src/payment/CardPaymentService.java=UTF-8
+encoding//src/payment/util/CardUtils.java=UTF-8
+encoding//test/payment/util/CryptoUtilTest.java=UTF-8
+encoding/<project>=UTF-8

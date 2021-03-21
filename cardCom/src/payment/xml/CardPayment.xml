@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE sqlMap PUBLIC "-//ibatis.apache.org//DTD SQL Map 2..0//EN" "http://ibatis.apache.org/dtd/sql-map-2.dtd">
+<sqlMap namespace="CardPayment">
+	
+	<typeAlias alias="approvalDto" type="payment.ApprovalDto"/>
+	<typeAlias alias="paymentDto" type="payment.PaymentDto"/>
+	<!-- 
+	create table SEQ_NRTB
+	(
+	TYPE_CLS VARCHAR2(10) not null ,
+	INPT_YMD VARCHAR2(8) not null ,
+	SEQ_NR   NUMBER(10) not null ,
+	FST_INPT_YMD VARCHAR2(8) not null ,
+	FST_INPT_TOD VARCHAR2(6) not null ,
+	DELETE_FLAG VARCHAR2(1) not null ,
+	constraint PK_SEQ_NRTB primary key (TYPE_CLS, INPT_YMD)
+	);
+	comment on table SEQ_NRTB is '채번관리테이블';
+	//입력 타입구분
+	//입력일자
+	//순번
+	//최초입력일
+	//최초입력시간
+	//삭제플레그
+	-->
+	<update id="updateSeq" parameterClass="map">
+	UPDATE SEQ_NRTB
+	   SET SEQ_NR = SEQ_NR + 1
+	 WHERE TYPE_CLS = #typeCls#
+	   AND INPT_YMD = #inptYmd#
+	</update>
+	<select id="selectSeq" parameterClass="map" resultClass="int">
+	SELECT SEQ_NR
+	  FROM SEQ_NRTB
+	 WHERE TYPE_CLS = #typeCls#
+	   AND INPT_YMD = #inptYmd#
+	</select>
+	<insert id="insertSeq" parameterClass="map">
+	INSERT INTO SEQ_NRTB(
+		TYPE_CLS
+	   ,INPT_YMD
+	   ,SEQ_NR
+	   ,FST_INPT_YMD
+	   ,FST_INPT_TOD
+	   ,DELETE_FLAG
+	) VALUES (
+		#typeCls#
+	   ,#inptYmd#
+	   ,1
+	   ,TO_CHAR(CURRENT DATE, 'yyyyMMdd')
+	   ,TO_CHAR(CURRENT DATE, 'HH24MISS')
+	   ,'0'
+	)
+	</insert>
+	<!-- 
+	create table CARD_PAY01TB
+	(
+	MNG_NO      VARCHAR2(20) not null ,
+	DATA_TYPE   VARCHAR2(10) not null ,
+	CARD_INFO   VARCHAR2(300) not null ,
+	MON_PLAN    VARCHAR2(2) not null ,
+	AMT   DECIMAL(15) not null ,
+	VAT   DECIMAL(15) not null ,
+	BEF_MNG_NO      VARCHAR2(20)  ,
+	FST_INPT_YMD VARCHAR2(8) not null ,
+	FST_INPT_TOD VARCHAR2(6) not null ,
+	DELETE_FLAG VARCHAR2(1) not null ,
+	constraint PK_CARD_PAY01TB primary key (MNG_NO, DATA_TYPE)
+	);
+	comment on table CARD_PAY01TB is '카드결제테이블';
+	//관리번호
+	//결제취소구분
+	//암호화카드정보
+	//할부개월
+	//금액
+	//부가세
+	//원 관리번호
+	//최초입력일
+	//최초입력시간
+	//삭제플레그
+	-->
+	<insert id="insertSeq" parameterClass="paymentDto">
+	INSERT INTO CARD_PAY01TB(
+		MNG_NO
+	   ,DATA_TYPE
+	   ,CARD_INFO
+	   ,MON_PLAN
+	   ,AMT
+	   ,VAT
+	   ,BEF_MNG_NO
+	   
+	   ,FST_INPT_YMD
+	   ,FST_INPT_TOD
+	   ,DELETE_FLAG
+	) VALUES (
+		#mngNo#
+	   ,#dataType#
+	   ,#encCardInfo#
+	   ,#monthlyInstallmentPlan#
+	   ,#amt#
+	   ,#VAT#
+	   ,#befMngNo#
+	   
+	   ,TO_CHAR(CURRENT DATE, 'yyyyMMdd')
+	   ,TO_CHAR(CURRENT DATE, 'HH24MISS')
+	   ,'0'
+	)
+	</insert>
+	<select id="selectCardInfo" parameterClass="java.lang.String" resultClass="paymentDto">
+	SELECT MNG_NO     mngNo
+	      ,DATA_TYPE  dataType
+	      ,CARD_INFO  encCardInfo
+	      ,MON_PLAN   monthlyInstallmentPlan
+	      ,AMT        amt
+	      ,VAT        VAT
+	      ,BEF_MNG_NO befMngNo
+	  FROM CARD_PAY01TB
+	 WHERE MNG_NO = #mngNo#
+	   AND DELETE_FLAG = '0'
+	  WITH UR 
+	</select>
+	<select id="selectCancelList" parameterClass="java.lang.String" resultClass="paymentDto">
+	SELECT MNG_NO     mngNo
+	      ,DATA_TYPE  dataType
+	      ,CARD_INFO  encCardInfo
+	      ,MON_PLAN   monthlyInstallmentPlan
+	      ,AMT        amt
+	      ,VAT        VAT
+	      ,BEF_MNG_NO befMngNo
+	  FROM CARD_PAY01TB
+	 WHERE BEF_MNG_NO = #befMngNo#
+	   AND DELETE_FLAG = '0'
+	  WITH UR 
+	</select>
+	
+	
+	<!-- 
+	create table CARD_PAY02TB
+	(
+	MNG_NO      VARCHAR2(20) not null ,
+	SEND_DATA   VARCHAR2(450) not null ,
+	
+	FST_INPT_YMD VARCHAR2(8) not null ,
+	FST_INPT_TOD VARCHAR2(6) not null ,
+	DELETE_FLAG VARCHAR2(1) not null ,
+	constraint PK_CARD_PAY02TB primary key (MNG_NO)
+	);
+	comment on table CARD_PAY02TB is '카드결제전송테이블';
+	//관리번호
+	//결제전문
+	
+	//최초입력일
+	//최초입력시간
+	//삭제플레그
+	-->
+	<insert id="insertSendCard" parameterClass="approvalDto">
+	INSERT INTO CARD_PAY02TB(
+		MNG_NO
+	   ,SEND_DATA
+	   
+	   ,FST_INPT_YMD
+	   ,FST_INPT_TOD
+	   ,DELETE_FLAG
+	) VALUES (
+		#mngNo#
+	   ,#sendMsg#
+	   
+	   ,TO_CHAR(CURRENT DATE, 'yyyyMMdd')
+	   ,TO_CHAR(CURRENT DATE, 'HH24MISS')
+	   ,'0'
+	)
+	</insert>
+	
+	
+
+</sqlMap>
